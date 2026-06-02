@@ -1,0 +1,43 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Test Runner</title>
+<style>
+ :root{font-family:system-ui,sans-serif}body{margin:0;background:#0d1117;color:#e6edf3}
+ header{padding:1.2rem;text-align:center}h1{margin:0;font-size:1.5rem}.sub{color:#8b97a7;font-size:.85rem}
+ .wrap{max-width:960px;margin:0 auto;padding:0 1rem 3rem}
+ .card{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:1rem;margin:1rem 0}
+ textarea{width:100%;box-sizing:border-box;height:260px;background:#0b0f16;color:#e6edf3;border:1px solid #30363d;border-radius:8px;padding:.8rem;font-family:ui-monospace,monospace;font-size:.82rem}
+ button{padding:.55rem 1.2rem;border:0;border-radius:8px;background:#238636;color:#fff;font-weight:600;cursor:pointer}
+ .res{border:1px solid #30363d;border-radius:8px;padding:.6rem .8rem;margin:.4rem 0}
+ .pass{border-left:4px solid #238636}.fail{border-left:4px solid #da3633}
+ .badge{font-weight:700;padding:.1rem .5rem;border-radius:999px;font-size:.8rem}
+ .summary{display:flex;gap:1rem;font-weight:700}
+ .f{color:#ff7b72;font-size:.85rem;margin:.2rem 0 0 1rem}
+ code{background:#0b0f16;padding:.1rem .3rem;border-radius:4px}
+</style></head><body>
+<header><h1>✅ Test Runner</h1><div class="sub">HTTP integration checks · Cloudflare Workers</div></header>
+<div class="wrap">
+ <div class="card">
+  <p class="sub">Define checks as JSON. Each check: <code>{url, method?, headers?, body?, expectStatus?, expectBodyContains?, expectJsonPath?:{path,equals}, timeoutMs?}</code></p>
+  <textarea id="checks"></textarea>
+  <p><button id="run">Run checks</button> <span id="msg" class="sub"></span></p>
+ </div>
+ <div id="out"></div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+$("checks").value=JSON.stringify([
+ {name:"GitHub API up",url:"https://api.github.com",expectStatus:200,expectBodyContains:"current_user_url"},
+ {name:"Example JSON",url:"https://jsonplaceholder.typicode.com/todos/1",expectStatus:200,expectJsonPath:{path:"id",equals:1}}
+],null,2);
+$("run").onclick=async()=>{
+ let checks;try{checks=JSON.parse($("checks").value);}catch(e){$("msg").textContent="Invalid JSON: "+e.message;return;}
+ $("msg").textContent="Running…";$("out").innerHTML="";
+ const r=await fetch("/api/run",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({checks})});
+ const d=await r.json();
+ if(d.error){$("msg").textContent=d.error;return;}
+ $("msg").innerHTML=`<span class="summary"><span style="color:#3fb950">${d.passed} passed</span> <span style="color:#ff7b72">${d.failed} failed</span> / ${d.total}</span>`;
+ $("out").innerHTML=d.results.map(r=>`<div class="res ${r.ok?'pass':'fail'}"><span class="badge" style="background:${r.ok?'#238636':'#da3633'}">${r.ok?'PASS':'FAIL'}</span> <b>${r.name}</b> <span class="sub">· ${r.status??'—'} · ${r.durationMs}ms</span>${r.failures.map(f=>`<div class="f">✗ ${f}</div>`).join("")}</div>`).join("");
+};
+</script>
+</body></html>

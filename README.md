@@ -1,62 +1,31 @@
-# Test Runner
+# Test Runner (TR)
 
-**Category**: Build/Dev Tool
+Run HTTP integration checks against any API endpoints and get a pass/fail dashboard — on Cloudflare
+Workers (TypeScript + Hono). Checks run server-side in parallel from Cloudflare's edge, so no CORS
+limits and no local setup. Originally specced for Python script API integrations; rebuilt as a
+language-agnostic HTTP test runner on Cloudflare.
 
-A comprehensive test suite for validating Python script API integrations with mocking, coverage, and AI-powered test generation.
+## Features
+- Define a suite of checks as JSON (URL, method, headers, body, timeout)
+- Assertions: `expectStatus`, `expectBodyContains`, `expectJsonPath` (dot-path equals)
+- Parallel execution with per-check duration + failure reasons
+- Summary dashboard (passed / failed / total)
 
-## Features (Planned)
-- API integration tests for all scripts
-- Mock server for external APIs
-- Coverage reporting
-- AI-generated test cases
-- Regression testing
-- Performance benchmarking
-- CI/CD integration
-
-## APIs Tested
-- Twitter API (tweepy integration)
-- WAQI Air Quality API
-- Firebase Realtime Database
-- TinyURL API
-- IP Geolocation APIs
-- Highcharts Export API
-
-## Installation
-
+## Run
 ```bash
 npm install
+npm run dev
 ```
 
-## Usage
-
+## Deploy
 ```bash
-npm test                  # Run all tests
-npm run test:api          # API tests only
-npm run test:coverage     # With coverage
-npm run test:generate     # AI-generate new tests
-npm run test:watch        # Watch mode
+npm run deploy
 ```
 
-## Tech Stack
-- Jest/Vitest
-- MSW for API mocking
-- Workers AI for test generation
-- c8 for coverage
+## API
+- `POST /api/run` `{ checks: Check[] }` → `{ total, passed, failed, results[] }`
 
-## Project Structure
+`Check = { name?, url, method?, headers?, body?, expectStatus?, expectBodyContains?, expectJsonPath?:{path,equals}, timeoutMs? }`
 
-```
-TR/
-├── src/                # Test utilities
-├── tests/
-│   ├── api/            # API integration tests
-│   ├── unit/           # Unit tests
-│   └── integration/    # Integration tests
-├── mocks/              # API mocks
-├── jest.config.js
-└── package.json
-```
-
-## License
-
-MIT
+## Stack
+Cloudflare Workers · Hono
